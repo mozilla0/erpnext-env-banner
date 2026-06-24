@@ -1,0 +1,9 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.txt
+recursive-include erpnext_env_banner *.css
+recursive-include erpnext_env_banner *.js
+recursive-include erpnext_env_banner *.html
+recursive-include erpnext_env_banner *.py
