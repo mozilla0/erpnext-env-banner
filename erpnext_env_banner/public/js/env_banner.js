@@ -1,9 +1,9 @@
+/* ===== ENV BANNER v7 ===== */
 (function () {
 	"use strict";
+	console.log("[env-banner] script geladen (v7)");
 
-	var badgeEl = null;
-	var reattaching = false;
-	var titleTagged = false;
+	var badgeEl = null, reattaching = false, titleTagged = false, loggedOnce = false;
 
 	function getConfig() {
 		var boot = (window.frappe && frappe.boot) || {};
@@ -17,9 +17,7 @@
 	function tagTitle(cfg) {
 		if (titleTagged) return;
 		var prefix = "[" + cfg.label + "] ";
-		if (document.title.indexOf(prefix) !== 0) {
-			document.title = prefix + document.title;
-		}
+		if (document.title.indexOf(prefix) !== 0) document.title = prefix + document.title;
 		titleTagged = true;
 	}
 
@@ -35,8 +33,6 @@
 		if (!badgeEl.isConnected) document.body.appendChild(badgeEl);
 	}
 
-	// Misst die reale Position und korrigiert aufs Fensterzentrum,
-	// auch wenn ein Vorfahre ein CSS-transform hat.
 	function positionBadge() {
 		if (!badgeEl || !badgeEl.isConnected) return;
 		badgeEl.style.left = "0px";
@@ -59,30 +55,32 @@
 	function apply() {
 		if (!(window.frappe && frappe.boot)) return false;
 		var cfg = getConfig();
-		if (!cfg.label) return true;
+		if (!cfg.label) {
+			if (!loggedOnce) { console.log("[env-banner] boot da, aber KEIN environment_label gesetzt"); loggedOnce = true; }
+			return true;
+		}
 		if (!document.body) return false;
 		tagTitle(cfg);
 		mountBadge(cfg);
 		positionBadge();
 		colorNavbar(cfg);
+		if (!loggedOnce) {
+			var r = badgeEl.getBoundingClientRect();
+			console.log("[env-banner] angewendet:", cfg.label, "| Badge sichtbar:", badgeEl.isConnected, "| Position:", Math.round(r.left) + "," + Math.round(r.top), "| Grösse:", Math.round(r.width) + "x" + Math.round(r.height));
+			loggedOnce = true;
+		}
 		return true;
 	}
 
 	function startObserver() {
 		if (!window.MutationObserver) return;
 		var obs = new MutationObserver(function () {
-			if (reattaching) return;
-			if (!(window.frappe && frappe.boot)) return;
+			if (reattaching || !(window.frappe && frappe.boot)) return;
 			var cfg = getConfig();
 			if (!cfg.label) return;
 			if (!badgeEl || !badgeEl.isConnected) {
-				reattaching = true;
-				mountBadge(cfg);
-				positionBadge();
-				reattaching = false;
-			} else {
-				positionBadge();
-			}
+				reattaching = true; mountBadge(cfg); positionBadge(); reattaching = false;
+			} else { positionBadge(); }
 			colorNavbar(cfg);
 		});
 		obs.observe(document.documentElement, { childList: true, subtree: true });
@@ -92,13 +90,9 @@
 		window.addEventListener("resize", positionBadge);
 		try {
 			if (window.frappe && frappe.router && frappe.router.on) {
-				frappe.router.on("change", function () {
-					setTimeout(apply, 150);
-				});
+				frappe.router.on("change", function () { setTimeout(apply, 150); });
 			}
-		} catch (e) {
-			/* ignore */
-		}
+		} catch (e) {}
 	}
 
 	function init() {
@@ -106,19 +100,11 @@
 		var timer = setInterval(function () {
 			tries += 1;
 			var done = apply();
-			if (done && getConfig().label) {
-				startObserver();
-				hookEvents();
-				clearInterval(timer);
-			} else if (done || tries > 150) {
-				clearInterval(timer);
-			}
+			if (done && getConfig().label) { startObserver(); hookEvents(); clearInterval(timer); }
+			else if (done || tries > 150) { clearInterval(timer); }
 		}, 200);
 	}
 
-	if (document.readyState === "loading") {
-		document.addEventListener("DOMContentLoaded", init);
-	} else {
-		init();
-	}
+	if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+	else init();
 })();
