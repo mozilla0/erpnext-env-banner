@@ -13,9 +13,11 @@
 		};
 	}
 
-	// Festes Label an document.body haengen (unabhaengig vom Layout).
+	// Label an <html> haengen (nicht an body): so bezieht sich position:fixed
+	// aufs Fenster und nicht auf einen ggf. transformierten App-Container (v16).
 	function mountBadge(cfg) {
-		if (!document.body) return;
+		var root = document.documentElement;
+		if (!root) return;
 		if (!badgeEl) {
 			badgeEl = document.createElement("div");
 			badgeEl.id = "env-banner-badge";
@@ -23,7 +25,7 @@
 		if (badgeEl.textContent !== cfg.label) badgeEl.textContent = cfg.label;
 		badgeEl.style.backgroundColor = cfg.color;
 		badgeEl.style.color = cfg.textColor;
-		if (!badgeEl.isConnected) document.body.appendChild(badgeEl);
+		if (!badgeEl.isConnected) root.appendChild(badgeEl);
 	}
 
 	// Bonus: klassische Navbar einfaerben, falls vorhanden.
@@ -41,13 +43,12 @@
 		if (!(window.frappe && frappe.boot)) return false;
 		var cfg = getConfig();
 		if (!cfg.label) return true; // nichts konfiguriert
-		if (!document.body) return false;
 		mountBadge(cfg);
 		colorNavbar(cfg);
 		return true;
 	}
 
-	// Beobachter: haengt das Label neu ein, wenn die v16-App-Oberflaeche es entfernt.
+	// Beobachter: haengt das Label neu ein, falls es doch entfernt wird.
 	function startObserver() {
 		if (!window.MutationObserver) return;
 		var obs = new MutationObserver(function () {
@@ -62,7 +63,6 @@
 			}
 			colorNavbar(cfg);
 		});
-		// documentElement + subtree faengt auch das Ersetzen von body-Inhalten ab
 		obs.observe(document.documentElement, { childList: true, subtree: true });
 	}
 
