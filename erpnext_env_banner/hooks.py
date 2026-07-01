@@ -6,8 +6,8 @@ app_email = "info@joker-it.ch"
 app_license = "MIT"
 
 # Wird im Desk auf jeder Seite geladen
-app_include_js = "/assets/erpnext_env_banner/js/env_banner.js"
-app_include_css = "/assets/erpnext_env_banner/css/env_banner.css"
+app_include_js = "env_banner.bundle.js"
+app_include_css = "env_banner.bundle.css"
 
 # Konfig aus site_config.json an das Frontend (frappe.boot) durchreichen
 extend_bootinfo = "erpnext_env_banner.boot.boot_session"
