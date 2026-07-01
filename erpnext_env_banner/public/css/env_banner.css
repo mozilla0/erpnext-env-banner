@@ -1,31 +1,19 @@
-/* Festes Umgebungs-Label, oben mittig, ueber allem, blockiert keine Klicks.
-   Funktioniert in allen v16-Ansichten (Workspace, Liste, Formular). */
 #env-banner-badge {
 	position: fixed;
 	top: 0;
-	left: 50%;
-	transform: translateX(-50%);
+	left: 0;
 	z-index: 9999;
-
+	width: max-content;
+	max-width: 90vw;
 	padding: 3px 16px;
 	border-radius: 0 0 6px 6px;
-
 	font-size: 11px;
 	font-weight: 700;
 	letter-spacing: 1px;
 	text-transform: uppercase;
 	white-space: nowrap;
 	line-height: 1.4;
-
 	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 	pointer-events: none;
 	font-family: inherit;
-}
-
-@media (max-width: 768px) {
-	#env-banner-badge {
-		font-size: 10px;
-		padding: 2px 10px;
-		letter-spacing: 0.5px;
-	}
 }
