@@ -1,9 +1,9 @@
-/* ===== ENV BANNER v7 ===== */
+/* ===== ENV BANNER v8 ===== */
 (function () {
 	"use strict";
-	console.log("[env-banner] script geladen (v7)");
+	console.log("[env-banner] script geladen (v8)");
 
-	var badgeEl = null, reattaching = false, titleTagged = false, loggedOnce = false;
+	var barEl = null, reattaching = false, titleTagged = false, loggedOnce = false;
 
 	function getConfig() {
 		var boot = (window.frappe && frappe.boot) || {};
@@ -21,54 +21,41 @@
 		titleTagged = true;
 	}
 
-	function mountBadge(cfg) {
+	function mountBar(cfg) {
 		if (!document.body) return;
-		if (!badgeEl) {
-			badgeEl = document.createElement("div");
-			badgeEl.id = "env-banner-badge";
+		if (!barEl) {
+			barEl = document.createElement("div");
+			barEl.id = "env-banner-bar";
 		}
-		if (badgeEl.textContent !== cfg.label) badgeEl.textContent = cfg.label;
-		badgeEl.style.backgroundColor = cfg.color;
-		badgeEl.style.color = cfg.textColor;
-		if (!badgeEl.isConnected) document.body.appendChild(badgeEl);
+		if (barEl.textContent !== cfg.label) barEl.textContent = cfg.label;
+		barEl.style.backgroundColor = cfg.color;
+		barEl.style.color = cfg.textColor;
+		if (!barEl.isConnected) document.body.appendChild(barEl);
 	}
 
-	function positionBadge() {
-		if (!badgeEl || !badgeEl.isConnected) return;
-		badgeEl.style.left = "0px";
-		badgeEl.style.top = "0px";
-		var r = badgeEl.getBoundingClientRect();
-		var targetLeft = Math.max(0, (window.innerWidth - r.width) / 2);
-		badgeEl.style.left = targetLeft - r.left + "px";
-		badgeEl.style.top = 0 - r.top + "px";
-	}
-
-	function colorNavbar(cfg) {
-		var navbar = document.querySelector(".navbar");
-		if (navbar && navbar.dataset.envBannerApplied !== cfg.label) {
-			navbar.style.backgroundColor = cfg.color;
-			navbar.style.borderBottom = "none";
-			navbar.dataset.envBannerApplied = cfg.label;
-		}
+	// Voller Balken oben: Position aufs echte Fenster korrigiert (immun gegen transform).
+	function positionBar() {
+		if (!barEl || !barEl.isConnected) return;
+		barEl.style.left = "0px";
+		barEl.style.top = "0px";
+		var r = barEl.getBoundingClientRect();
+		barEl.style.left = 0 - r.left + "px";
+		barEl.style.top = 0 - r.top + "px";
+		barEl.style.width = window.innerWidth + "px";
 	}
 
 	function apply() {
 		if (!(window.frappe && frappe.boot)) return false;
 		var cfg = getConfig();
 		if (!cfg.label) {
-			if (!loggedOnce) { console.log("[env-banner] boot da, aber KEIN environment_label gesetzt"); loggedOnce = true; }
+			if (!loggedOnce) { console.log("[env-banner] boot da, aber KEIN environment_label"); loggedOnce = true; }
 			return true;
 		}
 		if (!document.body) return false;
 		tagTitle(cfg);
-		mountBadge(cfg);
-		positionBadge();
-		colorNavbar(cfg);
-		if (!loggedOnce) {
-			var r = badgeEl.getBoundingClientRect();
-			console.log("[env-banner] angewendet:", cfg.label, "| Badge sichtbar:", badgeEl.isConnected, "| Position:", Math.round(r.left) + "," + Math.round(r.top), "| Grösse:", Math.round(r.width) + "x" + Math.round(r.height));
-			loggedOnce = true;
-		}
+		mountBar(cfg);
+		positionBar();
+		if (!loggedOnce) { console.log("[env-banner] Balken aktiv:", cfg.label); loggedOnce = true; }
 		return true;
 	}
 
@@ -78,16 +65,15 @@
 			if (reattaching || !(window.frappe && frappe.boot)) return;
 			var cfg = getConfig();
 			if (!cfg.label) return;
-			if (!badgeEl || !badgeEl.isConnected) {
-				reattaching = true; mountBadge(cfg); positionBadge(); reattaching = false;
-			} else { positionBadge(); }
-			colorNavbar(cfg);
+			if (!barEl || !barEl.isConnected) {
+				reattaching = true; mountBar(cfg); positionBar(); reattaching = false;
+			} else { positionBar(); }
 		});
 		obs.observe(document.documentElement, { childList: true, subtree: true });
 	}
 
 	function hookEvents() {
-		window.addEventListener("resize", positionBadge);
+		window.addEventListener("resize", positionBar);
 		try {
 			if (window.frappe && frappe.router && frappe.router.on) {
 				frappe.router.on("change", function () { setTimeout(apply, 150); });
