@@ -1,0 +1,23 @@
+/* Inhalt um die Balkenhoehe nach unten schieben, damit nichts verdeckt wird. */
+body {
+	padding-top: 24px !important;
+}
+
+#env-banner-bar {
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 24px;
+	line-height: 24px;
+	z-index: 99999;
+	text-align: center;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+	white-space: nowrap;
+	overflow: hidden;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+	pointer-events: none;
+	font-family: inherit;
+}
