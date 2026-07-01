@@ -1,8 +1,11 @@
 (function () {
 	"use strict";
 
+	var badgeEl = null;
+	var reattaching = false;
+
 	function getConfig() {
-		const boot = (window.frappe && frappe.boot) || {};
+		var boot = (window.frappe && frappe.boot) || {};
 		return {
 			label: boot.environment_label,
 			color: boot.environment_color || "#c0392b",
@@ -10,23 +13,22 @@
 		};
 	}
 
-	// Festes Label an document.body -> unabhaengig vom Layout (v16 Workspace,
-	// Liste, Formular). Bleibt bei SPA-Navigation bestehen.
-	function ensureBadge(cfg) {
-		let badge = document.getElementById("env-banner-badge");
-		if (!badge) {
-			badge = document.createElement("div");
-			badge.id = "env-banner-badge";
-			document.body.appendChild(badge);
+	// Festes Label an document.body haengen (unabhaengig vom Layout).
+	function mountBadge(cfg) {
+		if (!document.body) return;
+		if (!badgeEl) {
+			badgeEl = document.createElement("div");
+			badgeEl.id = "env-banner-badge";
 		}
-		if (badge.textContent !== cfg.label) badge.textContent = cfg.label;
-		badge.style.backgroundColor = cfg.color;
-		badge.style.color = cfg.textColor;
+		if (badgeEl.textContent !== cfg.label) badgeEl.textContent = cfg.label;
+		badgeEl.style.backgroundColor = cfg.color;
+		badgeEl.style.color = cfg.textColor;
+		if (!badgeEl.isConnected) document.body.appendChild(badgeEl);
 	}
 
-	// Bonus: klassische Navbar einfaerben, falls auf der Seite vorhanden.
+	// Bonus: klassische Navbar einfaerben, falls vorhanden.
 	function colorNavbar(cfg) {
-		const navbar = document.querySelector(".navbar");
+		var navbar = document.querySelector(".navbar");
 		if (navbar && navbar.dataset.envBannerApplied !== cfg.label) {
 			navbar.style.backgroundColor = cfg.color;
 			navbar.style.borderBottom = "none";
@@ -34,28 +36,61 @@
 		}
 	}
 
-	// Rueckgabe: false = noch nicht bereit; true = fertig (angewendet ODER nichts zu tun)
+	// false = boot noch nicht bereit; true = fertig (angewendet ODER nichts zu tun)
 	function apply() {
-		if (!(window.frappe && frappe.boot)) return false; // boot noch nicht geladen
-		const cfg = getConfig();
+		if (!(window.frappe && frappe.boot)) return false;
+		var cfg = getConfig();
 		if (!cfg.label) return true; // nichts konfiguriert
 		if (!document.body) return false;
-		ensureBadge(cfg);
+		mountBadge(cfg);
 		colorNavbar(cfg);
 		return true;
 	}
 
-	function init() {
-		let tries = 0;
-		let successTicks = 0;
-		const timer = setInterval(function () {
-			tries += 1;
-			if (apply() === true) {
-				successTicks += 1;
-				// Ein paar Ticks weiterlaufen, um spaet gerenderte Navbar zu erwischen
-				if (successTicks > 8) clearInterval(timer);
+	// Beobachter: haengt das Label neu ein, wenn die v16-App-Oberflaeche es entfernt.
+	function startObserver() {
+		if (!window.MutationObserver) return;
+		var obs = new MutationObserver(function () {
+			if (reattaching) return;
+			if (!(window.frappe && frappe.boot)) return;
+			var cfg = getConfig();
+			if (!cfg.label) return;
+			if (!badgeEl || !badgeEl.isConnected) {
+				reattaching = true;
+				mountBadge(cfg);
+				reattaching = false;
 			}
-			if (tries > 150) clearInterval(timer); // ~30s Sicherheits-Timeout
+			colorNavbar(cfg);
+		});
+		// documentElement + subtree faengt auch das Ersetzen von body-Inhalten ab
+		obs.observe(document.documentElement, { childList: true, subtree: true });
+	}
+
+	// Zusaetzlich bei Frappe-Routenwechseln neu anwenden.
+	function hookRouter() {
+		try {
+			if (window.frappe && frappe.router && frappe.router.on) {
+				frappe.router.on("change", function () {
+					setTimeout(apply, 100);
+				});
+			}
+		} catch (e) {
+			/* ignore */
+		}
+	}
+
+	function init() {
+		var tries = 0;
+		var timer = setInterval(function () {
+			tries += 1;
+			var done = apply();
+			if (done && getConfig().label) {
+				startObserver();
+				hookRouter();
+				clearInterval(timer);
+			} else if (done || tries > 150) {
+				clearInterval(timer);
+			}
 		}, 200);
 	}
 
