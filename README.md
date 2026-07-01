@@ -4,6 +4,8 @@ Kleine Frappe-/ERPNext-App, die im **Desk** sofort sichtbar macht, in welcher
 Umgebung man arbeitet. Sie färbt die Navbar ein und zeigt ein zentriertes Label
 (z. B. `PRODUKTIV`, `TEST`, `DEV`).
 
+<img width="2535" height="494" alt="Bildschirmfoto_20260701_133619" src="https://github.com/user-attachments/assets/4b547ad5-2ba9-413f-9c02-efdaffb1164c" />
+
 Die Konfiguration erfolgt **pro Site** über die `site_config.json` – die App
 selbst muss nur einmal installiert werden und verhält sich auf jeder Site
 unterschiedlich. Es werden keine Core-Dateien verändert, daher ist die Lösung
@@ -13,6 +15,8 @@ update-sicher.
 > (mit Bindestrichen), der eigentliche App-/Python-Paketname ist
 > `erpnext_env_banner` (mit Unterstrichen). Python-Module dürfen keine
 > Bindestriche enthalten.
+
+<img width="2535" height="494" alt="Bildschirmfoto_20260701_133651" src="https://github.com/user-attachments/assets/af51e941-6ce3-40e9-977d-2becb127edb7" />
 
 ## Installation (eigene Bench)
 
