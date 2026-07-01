@@ -1,4 +1,4 @@
-/* ===== ENV BANNER v8 ===== */
+/* ===== ENV BANNER v9 ===== */
 (function () {
 	"use strict";
 	console.log("[env-banner] script geladen (v8)");
