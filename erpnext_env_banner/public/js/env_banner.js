@@ -10,63 +10,53 @@
 		};
 	}
 
-	// Rueckgabe:
-	//   false -> noch nicht bereit, weiter versuchen
-	//   true  -> fertig (angewendet ODER nichts zu tun)
-	function applyBanner() {
-		// Warten, bis frappe.boot geladen ist
-		if (!(window.frappe && frappe.boot)) {
-			return false;
+	// Festes Label an document.body -> unabhaengig vom Layout (v16 Workspace,
+	// Liste, Formular). Bleibt bei SPA-Navigation bestehen.
+	function ensureBadge(cfg) {
+		let badge = document.getElementById("env-banner-badge");
+		if (!badge) {
+			badge = document.createElement("div");
+			badge.id = "env-banner-badge";
+			document.body.appendChild(badge);
 		}
+		if (badge.textContent !== cfg.label) badge.textContent = cfg.label;
+		badge.style.backgroundColor = cfg.color;
+		badge.style.color = cfg.textColor;
+	}
 
-		const cfg = getConfig();
-
-		// Kein Label konfiguriert -> nichts tun, aufhoeren
-		if (!cfg.label) {
-			return true;
-		}
-
+	// Bonus: klassische Navbar einfaerben, falls auf der Seite vorhanden.
+	function colorNavbar(cfg) {
 		const navbar = document.querySelector(".navbar");
-		if (!navbar) {
-			return false;
+		if (navbar && navbar.dataset.envBannerApplied !== cfg.label) {
+			navbar.style.backgroundColor = cfg.color;
+			navbar.style.borderBottom = "none";
+			navbar.dataset.envBannerApplied = cfg.label;
 		}
+	}
 
-		// Schon angewendet (mit gleichem Label) -> fertig
-		if (navbar.dataset.envBannerApplied === cfg.label) {
-			return true;
-		}
-
-		// Navbar einfaerben
-		navbar.style.backgroundColor = cfg.color;
-		navbar.style.borderBottom = "none";
-		navbar.dataset.envBannerApplied = cfg.label;
-
-		// Container relativ positionieren, damit das Label zentriert werden kann
-		const container = navbar.querySelector(".container") || navbar;
-		container.classList.add("env-banner-host");
-
-		// Label nur einmal einfuegen
-		let el = container.querySelector(".env-banner-label");
-		if (!el) {
-			el = document.createElement("div");
-			el.className = "env-banner-label";
-			container.appendChild(el);
-		}
-		el.textContent = cfg.label;
-		el.style.color = cfg.textColor;
-
+	// Rueckgabe: false = noch nicht bereit; true = fertig (angewendet ODER nichts zu tun)
+	function apply() {
+		if (!(window.frappe && frappe.boot)) return false; // boot noch nicht geladen
+		const cfg = getConfig();
+		if (!cfg.label) return true; // nichts konfiguriert
+		if (!document.body) return false;
+		ensureBadge(cfg);
+		colorNavbar(cfg);
 		return true;
 	}
 
 	function init() {
 		let tries = 0;
+		let successTicks = 0;
 		const timer = setInterval(function () {
 			tries += 1;
-			// Aufhoeren, sobald angewendet oder nach ~15s Timeout
-			if (applyBanner() === true || tries > 150) {
-				clearInterval(timer);
+			if (apply() === true) {
+				successTicks += 1;
+				// Ein paar Ticks weiterlaufen, um spaet gerenderte Navbar zu erwischen
+				if (successTicks > 8) clearInterval(timer);
 			}
-		}, 100);
+			if (tries > 150) clearInterval(timer); // ~30s Sicherheits-Timeout
+		}, 200);
 	}
 
 	if (document.readyState === "loading") {
